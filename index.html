@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prostate Pathology Reporter</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="container">
+    <h1>Prostate Pathology Reporter</h1>
+
+    <div class="field-group full-width">
+        <label>Is cancer present?</label>
+        <select id="isMalignant" class="report-field">
+            <option value="no">No (Benign)</option>
+            <option value="yes">Yes (Malignant)</option>
+        </select>
+    </div>
+
+    <div id="benign-config" class="conditional-box full-width" style="display: block;">
+        <label>Number of benign parts</label>
+        <input type="number" id="benignPartCount" class="report-field" value="1" min="1" max="26">
+    </div>
+
+    <div id="malignant-ui" style="display: none;">
+        <div class="input-grid">
+            <div class="field-group">
+                <label>Cancer type</label>
+                <select id="cancerType" class="report-field">
+                    <option value="acinar adenocarcinoma">Acinar adenocarcinoma</option>
+                    <option value="prostatic ductal adenocarcinoma">Prostatic ductal adenocarcinoma</option>
+                </select>
+            </div>
+            <div class="field-group">
+                <label>IHC confirmed?</label>
+                <select id="ihc" class="report-field">
+                    <option value="no">No</option>
+                    <option value="yes">Yes</option>
+                </select>
+            </div>
+            <div class="field-group">
+                <label>Overall Gleason score</label>
+                <select id="gleason" class="report-field">
+                    <option value="">-- Select --</option>
+                    <option value="3+3=6">3+3=6</option>
+                    <option value="3+4=7">3+4=7</option>
+                    <option value="4+3=7">4+3=7</option>
+                    <option value="4+4=8">4+4=8</option>
+                    <option value="3+5=8">3+5=8</option>
+                    <option value="5+3=8">5+3=8</option>
+                    <option value="4+5=9">4+5=9</option>
+                    <option value="5+4=9">5+4=9</option>
+                    <option value="5+5=10">5+5=10</option>
+                </select>
+            </div>
+            <div class="field-group">
+                <label>Overall Prognostic grade group</label>
+                <input type="text" id="gradeGroup" class="report-field" readonly>
+            </div>
+
+            <div class="field-group">
+                <label>Total cores involved (Right)</label>
+                <input type="text" id="rightSummary" class="report-field" readonly>
+            </div>
+            <div class="field-group">
+                <label>Total cores involved (Left)</label>
+                <input type="text" id="leftSummary" class="report-field" readonly>
+            </div>
+            <div class="field-group full-width">
+                <label>Tumour length of most involved core (mm)</label>
+                <input type="number" id="mostInvolvedLen" class="report-field" readonly>
+            </div>
+
+            <div class="field-group">
+                <label>Perineural invasion</label>
+                <select id="pni" class="report-field">
+                    <option value="absent">Absent</option>
+                    <option value="present">Present</option>
+                </select>
+            </div>
+            <div class="field-group">
+                <label>Extra prostatic invasion</label>
+                <select id="epi" class="report-field">
+                    <option value="absent">Absent</option>
+                    <option value="present">Present</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="specimen-section">
+            <div class="section-header">
+                <h3>Specimen details</h3>
+                <button type="button" onclick="addPart()" class="btn-add">+ Add Part</button>
+            </div>
+            <div id="parts-container"></div>
+        </div>
+    </div>
+
+    <div class="output-container">
+        <h3>LIMS report preview (Arial 11pt)</h3>
+        <div id="report-output"></div>
+        <button onclick="copyToClipboard()" id="copyBtn" class="btn-main">Copy to LIMS</button>
+    </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
