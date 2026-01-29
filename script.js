@@ -64,31 +64,32 @@ function updateReport() {
     const malignantUI = document.getElementById('malignant-ui');
     const benignConfig = document.getElementById('benign-config');
 
-    // 1. BENIGN CASE LOGIC
     if (isMalignant === 'no') {
         malignantUI.style.display = 'none';
         benignConfig.style.display = 'block';
-        
         const count = parseInt(document.getElementById('benignPartCount').value) || 1;
         let labels = [];
-        for (let i = 0; i < count; i++) { labels.push("Part " + alphabet[i]); }
-        
+        for (let i = 0; i < count; i++) labels.push("Part " + alphabet[i]);
         reportOutput.innerText = labels.join(' & ') + ':\nThese are cores of benign prostate tissue. No malignancy is identified in the multiple tissue planes examined.';
         return;
     }
 
-    // 2. MALIGNANT CASE LOGIC
     malignantUI.style.display = 'block';
     benignConfig.style.display = 'none';
 
-    let rPos = 0, rTot = 0, lPos = 0, lTot = 0, maxInvolved = 0;
+    // Gleason Metrics
     const gleasonVal = document.getElementById('gleason').value;
     const gg = GRADE_MAP[gleasonVal] || "";
     document.getElementById('gradeGroup').value = gg;
 
+    const g7Box = document.getElementById('g7-details');
+    const isG7 = (gleasonVal === "3+4=7" || gleasonVal === "4+3=7");
+    g7Box.style.display = isG7 ? 'grid' : 'none';
+
+    let rPos = 0, rTot = 0, lPos = 0, lTot = 0, maxInvolved = 0;
     let partReportText = "";
     const cards = document.querySelectorAll('.part-card');
-    
+
     cards.forEach(card => {
         const letter = card.id.replace('card-', '');
         const diag = card.querySelector('.p-diag').value;
@@ -103,12 +104,11 @@ function updateReport() {
             cancerBox.style.display = 'block';
             const pos = parseInt(card.querySelector('.p-pos').value) || 0;
             const tot = parseInt(card.querySelector('.p-total').value) || 0;
-            const agg = card.querySelector('.p-agg').value || 0;
             const max = parseFloat(card.querySelector('.p-max').value) || 0;
 
             partReportText += `Gleason patterns: ${card.querySelector('.p-patterns').value || '---'}\n`;
             partReportText += `${pos} / ${tot} cores invaded by tumour\n`;
-            partReportText += `Aggregate total length of tumour: ${agg} mm\n`;
+            partReportText += `Aggregate total length of tumour: ${card.querySelector('.p-agg').value || 0} mm\n`;
             partReportText += `Maximum length of tumour in any core: ${max} mm\n\n`;
 
             if (siteValue.toLowerCase().includes('right')) { rPos += pos; rTot += tot; }
@@ -120,22 +120,24 @@ function updateReport() {
         }
     });
 
-    // Update Summary UI
     document.getElementById('rightSummary').value = `${rPos} / ${rTot}`;
     document.getElementById('leftSummary').value = `${lPos} / ${lTot}`;
     document.getElementById('mostInvolvedLen').value = maxInvolved;
 
-    // Final Report Assembly
     let report = `Cancer type: ${document.getElementById('cancerType').value}\n`;
     if (document.getElementById('ihc').value === 'yes') report += `IHC: Confirmed with absent staining of basal cells (CK5/6 and P63) and positive staining for racemase with AMACR/P504S.\n`;
     
     report += `Overall Gleason score: ${gleasonVal || '---'}\n`;
+    if (isG7) {
+        report += `Cribriform morphology: ${document.getElementById('cribriform').value}\n`;
+        report += `Overall percentage pattern 4: ${document.getElementById('percent4').value || '0'}%\n`;
+    }
     report += `Total cores involved (Right): ${rPos} / ${rTot}\n`;
     report += `Total cores involved (Left): ${lPos} / ${lTot}\n`;
     report += `Overall prognostic grade group: ${gg || '---'}\n`;
     report += `Tumour length of most involved core: ${maxInvolved} mm\n`;
     report += `Perineural invasion: ${document.getElementById('pni').value}\n`;
-    report += `Extra prostatic invasion: ${document.getElementById('epi').value}\n\n`; // Spacing before parts
+    report += `Extra prostatic invasion: ${document.getElementById('epi').value}\n\n`;
     
     report += partReportText;
     reportOutput.innerText = report;

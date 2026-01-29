@@ -19,7 +19,7 @@
         </select>
     </div>
 
-    <div id="benign-config" class="conditional-box full-width" style="display: block;">
+    <div id="benign-config" class="conditional-box full-width">
         <label>Number of benign parts</label>
         <input type="number" id="benignPartCount" class="report-field" value="1" min="1" max="26">
     </div>
@@ -58,6 +58,21 @@
             <div class="field-group">
                 <label>Overall Prognostic grade group</label>
                 <input type="text" id="gradeGroup" class="report-field" readonly>
+            </div>
+
+            <div id="g7-details" class="conditional-box full-width">
+                <div class="field-group">
+                    <label>Cribriform morphology</label>
+                    <select id="cribriform" class="report-field">
+                        <option value="no">No</option>
+                        <option value="focal">Focal</option>
+                        <option value="extensive">Extensive</option>
+                    </select>
+                </div>
+                <div class="field-group">
+                    <label>Overall % pattern 4</label>
+                    <input type="text" id="percent4" class="report-field" placeholder="e.g. 15">
+                </div>
             </div>
 
             <div class="field-group">
