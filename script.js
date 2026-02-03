@@ -31,13 +31,54 @@ function validateData() {
     return isValid;
 }
 
+function checkDuplicateSites() {
+    const siteCounts = {};
+    const cards = document.querySelectorAll('.part-card');
+    let hasDuplicate = false;
+
+    // First, clear all previous error styling
+    cards.forEach(card => {
+        card.querySelector('.p-site-select').classList.remove('validation-error');
+    });
+
+    cards.forEach(card => {
+        const sel = card.querySelector('.p-site-select');
+        const siteValue = sel.value;
+
+        // Only track if it's not 'other'
+        if (siteValue !== 'other') {
+            if (siteCounts[siteValue]) {
+                siteCounts[siteValue].push(sel);
+                hasDuplicate = true;
+            } else {
+                siteCounts[siteValue] = [sel];
+            }
+        }
+    });
+
+    // If duplicates exist, highlight all boxes involved in the conflict
+    if (hasDuplicate) {
+        for (const site in siteCounts) {
+            if (siteCounts[site].length > 1) {
+                siteCounts[site].forEach(element => {
+                    element.classList.add('validation-error');
+                });
+            }
+        }
+    }
+
+    // Disable copy button if there's a duplicate
+    document.getElementById('copyBtn').disabled = hasDuplicate;
+    return hasDuplicate;
+}
+
 // Active Calculations
 function calcSide(side) {
     let p = 0, t = 0;
     document.querySelectorAll('.part-card').forEach(card => {
         const d = card.querySelector('.p-diag').value;
         const s = card.querySelector('.p-site-text').style.display === 'block' ? card.querySelector('.p-site-text').value : card.querySelector('.p-site-select').value;
-        if (d === 'adenocarcinoma' && s.toLowerCase().includes(side)) {
+        if (s.toLowerCase().includes(side)) {
             p += parseInt(card.querySelector('.p-pos').value) || 0;
             t += parseInt(card.querySelector('.p-total').value) || 0;
         }
@@ -46,6 +87,7 @@ function calcSide(side) {
     updateReport();
 }
 
+// Automatically retrieve maximum length of involved core
 function calcMaxLen() {
     let max = 0;
     document.querySelectorAll('.part-card').forEach(card => {
@@ -58,47 +100,104 @@ function calcMaxLen() {
     updateReport();
 }
 
+// Find if tumour is right side, left side or both
+
+function getTumourSiteStatus() {
+    const rVal = document.getElementById('rightSummary').value || "";
+    const lVal = document.getElementById('leftSummary').value || "";
+
+    // Helper to extract the first number from "X / Y"
+    const countPos = (str) => {
+        if (!str.includes('/')) return 0;
+        return parseInt(str.split('/')[0].trim()) || 0;
+    };
+
+    const rightPos = countPos(rVal);
+    const leftPos = countPos(lVal);
+
+    if (rightPos > 0 && leftPos > 0) return "Both sides";
+    if (rightPos > 0) return "Right side";
+    if (leftPos > 0) return "Left side";
+    return "None identified";
+}
+
 // Dynamic Part Addition
 function addPart() {
     if (currentPartIndex >= 26) return;
     const letter = alphabet[currentPartIndex];
+    
     const html = `
         <div class="part-card" id="card-${letter}">
             <div class="part-header-row">
                 <h4>Part ${letter}</h4>
                 <div class="flex-row">
-                    <select class="report-field p-diag"><option value="adenocarcinoma">Adenocarcinoma</option><option value="benign">Benign</option><option value="asap">ASAP</option><option value="pin">PIN</option></select>
+                    <select class="report-field p-diag" onchange="updateReport()">
+                        <option value="adenocarcinoma">Adenocarcinoma</option>
+                        <option value="benign">Benign</option>
+                        <option value="asap">ASAP</option>
+                        <option value="pin">PIN</option>
+                    </select>
                     <button type="button" class="btn-remove" onclick="removePart('${letter}')">Remove</button>
                 </div>
             </div>
+
             <div class="input-grid">
                 <div class="field-group full-width">
                     <label>Site</label>
                     <select class="report-field p-site-select" onchange="toggleSiteInput('${letter}')">
-                        <option value="Right anterior">Right anterior</option><option value="Right mid">Right mid</option><option value="Right posterior">Right posterior</option>
-                        <option value="Left anterior">Left anterior</option><option value="Left mid">Left mid</option><option value="Left posterior">Left posterior</option>
+                        <option value="Right anterior">Right anterior</option>
+                        <option value="Right mid">Right mid</option>
+                        <option value="Right posterior">Right posterior</option>
+                        <option value="Left anterior">Left anterior</option>
+                        <option value="Left mid">Left mid</option>
+                        <option value="Left posterior">Left posterior</option>
                         <option value="other">Other...</option>
                     </select>
-                    <input type="text" class="report-field p-site-text" id="site-text-${letter}" style="display: none; margin-top: 5px;" placeholder="Custom site...">
+                    <input type="text" class="report-field p-site-text" id="site-text-${letter}" style="display: none; margin-top: 5px;" placeholder="Custom site name...">
                 </div>
+
+                <div class="field-group">
+                    <label id="label-cores-${letter}">Specimen Cores (Inv / Tot)</label>
+                    <div class="flex-row">
+                        <span class="inv-group-${letter}">
+                            <input type="number" class="report-field p-pos" value="0"> 
+                            <span style="margin: 0 5px;">/</span>
+                        </span>
+                        <input type="number" class="report-field p-total" value="1">
+                    </div>
+                </div>
+
                 <div class="full-width" id="logic-${letter}">
-                    <div class="input-grid">
-                        <div class="field-group"><label>Gleason patterns</label><input type="text" class="report-field p-patterns"></div>
-                        <div class="field-group"><label>Cores (Inv/Tot)</label><div class="flex-row"><input type="number" class="report-field p-pos" value="1"><span>/</span><input type="number" class="report-field p-total" value="1"></div></div>
-                        <div class="field-group"><label>Agg Length (mm)</label><input type="number" class="report-field p-agg" step="0.1"></div>
-                        <div class="field-group"><label>Max Length (mm)</label><input type="number" class="report-field p-max" step="0.1"></div>
+                    <div class="input-grid" style="margin-bottom: 0; grid-template-columns: 1fr 1fr 1fr;">
+                        <div class="field-group">
+                            <label>Gleason patterns</label>
+                            <input type="text" class="report-field p-patterns" placeholder="e.g. 3, 4">
+                        </div>
+                        <div class="field-group">
+                            <label>Aggregate Length (mm)</label>
+                            <input type="number" class="report-field p-agg" step="1">
+                        </div>
+                        <div class="field-group">
+                            <label>Maximum Length (mm)</label>
+                            <input type="number" class="report-field p-max" step="1">
+                        </div>
                     </div>
                 </div>
             </div>
         </div>`;
+
     document.getElementById('parts-container').insertAdjacentHTML('beforeend', html);
     currentPartIndex++;
+    
+    // Refresh event listeners so the new fields trigger the updateReport function
     attachListeners();
+    // Run updateReport to ensure the initial state (Adeno vs Benign) is correctly displayed
     updateReport();
 }
 
 function updateReport() {
     validateData();
+    const isDuplicate = checkDuplicateSites();
     const isM = document.getElementById('isMalignant').value;
     const out = document.getElementById('report-output');
     const cards = document.querySelectorAll('.part-card');
@@ -123,6 +222,9 @@ function updateReport() {
     const isG7 = (gv === "3+4=7" || gv === "4+3=7");
     document.getElementById('g7-details').style.display = isG7 ? 'grid' : 'none';
 
+    const siteResult = getTumourSiteStatus();
+    document.getElementById('tumourSite').value = siteResult;
+
     let partText = "";
     cards.forEach(card => {
         const letter = card.id.replace('card-', '');
@@ -134,12 +236,35 @@ function updateReport() {
         if (d === 'adenocarcinoma') {
             log.style.display = 'block';
             partText += `\n`;
-            partText += `Gleason patterns: ${card.querySelector('.p-patterns').value || '---'}\n`;
-            partText += `${card.querySelector('.p-pos').value} / ${card.querySelector('.p-total').value} cores invaded\n`;
-            partText += `Aggregate length: ${card.querySelector('.p-agg').value || 0} mm\nMax length: ${card.querySelector('.p-max').value || 0} mm\n\n`;
+            partText += `Gleason patterns in order of frequency: ${card.querySelector('.p-patterns').value || '---'}\n`;
+            partText += `Number of cores invaded by tumour: ${card.querySelector('.p-pos').value} / ${card.querySelector('.p-total').value}\n`;
+            partText += `Aggregate total length of tumour: ${card.querySelector('.p-agg').value || 0} mm\nMaximum length of tumour in any core: ${card.querySelector('.p-max').value || 0} mm\n\n`;
         } else {
             log.style.display = 'none';
             partText += `${d.toUpperCase()}\n\n`;
+        }
+    });    
+
+        // Include benign cores as demoninator of core count
+    document.querySelectorAll('.part-card').forEach(card => {
+        const letter = card.id.replace('card-', '');
+        const d = card.querySelector('.p-diag').value;
+        
+        // Target the specific UI elements for this part
+        const invG = card.querySelector(`.inv-group-${letter}`);
+        const lbl = document.getElementById(`label-cores-${letter}`);
+        const logic = document.getElementById(`logic-${letter}`);
+
+        // --- NEW LOGIC START ---
+        if (d === 'adenocarcinoma') {
+            invG.style.display = 'inline-block';      // Show the "Inv /" part
+            lbl.innerText = "Specimen Cores (Inv/Tot)"; // Set the malignant label
+            logic.style.display = 'block';            // Show Gleason/Length fields
+        } else {
+            invG.style.display = 'none';              // Hide the "Inv /" part
+            lbl.innerText = "Total cores";            // Set the benign label
+            card.querySelector('.p-pos').value = 0;   // Force Involved to 0 for math
+            logic.style.display = 'none';             // Hide Gleason/Length fields
         }
     });
 
@@ -148,8 +273,9 @@ function updateReport() {
     r += `Overall Gleason score: ${gv || '---'}\n`;
     r += `Prognostic Grade Group: ${gg}\n`;
     if (isG7) r += `Cribriform morphology: ${document.getElementById('cribriform').value}\nPercent Pattern 4: ${document.getElementById('percent4').value}%\n\n`;
-    r += `Maximum length in any core: ${document.getElementById('mostInvolvedLen').value} mm\n`;
-    r += `Total cores right side: ${document.getElementById('rightSummary').value} cores positive for tumour\nTotal cores left side: ${document.getElementById('leftSummary').value} cores positive for tumour \n\n`
+    r += `Maximum length in any core: ${document.getElementById('mostInvolvedLen').value} mm\n\n`;
+    r += `Tumour site: ${siteResult}\n`;
+    r += `Right side: ${document.getElementById('rightSummary').value} cores positive for tumour\nLeft side: ${document.getElementById('leftSummary').value} cores positive for tumour \n\n`
     r += `Perineural invasion: ${document.getElementById('pni').value}\nExtra prostatic invasion: ${document.getElementById('epi').value}\n\n${partText}`;
     r += `\n\nReported by: Dr ${consultant}, Consultant Histopathologist`;
     out.innerText = r;

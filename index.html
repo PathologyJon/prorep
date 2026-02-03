@@ -29,7 +29,7 @@
             <div class="field-group">
                 <label>Cancer type</label>
                 <select id="cancerType" class="report-field">
-                    <option value="Absent adenocarcinoma">Acinar adenocarcinoma</option>
+                    <option value="Acinar adenocarcinoma">Acinar adenocarcinoma</option>
                     <option value="Prostatic ductal adenocarcinoma">Prostatic ductal adenocarcinoma</option>
                 </select>
             </div>
@@ -64,15 +64,20 @@
                 <div class="field-group">
                     <label>Cribriform morphology</label>
                     <select id="cribriform" class="report-field">
-                        <option value="no">No</option>
-                        <option value="focal">Focal</option>
-                        <option value="extensive">Extensive</option>
+                        <option value="Not identified">No</option>
+                        <option value="Focal">Focal</option>
+                        <option value="Extensive">Extensive</option>
                     </select>
                 </div>
                 <div class="field-group">
                     <label>Overall % pattern 4</label>
-                    <input type="text" id="percent4" class="report-field" placeholder="e.g. 15">
+                    <input type="text" id="percent4" class="report-field" placeholder="e.g. 10 or 20-30">
                 </div>
+            </div>
+
+            <div class="field-group full-width">
+                <label>Tumour site</label>
+                <input type="text" id="tumourSite" class="report-field" readonly placeholder="Auto-calculated from parts">
             </div>
 
             <div class="field-group">
@@ -121,11 +126,15 @@
 
         <div class="specimen-section">
             <div class="section-header">
-                <h3>Specimen details</h3>
-                <button type="button" onclick="addPart()" class="btn-add">+ Add Part</button>
+            <h3>Specimen details</h3>
             </div>
-            <div id="parts-container"></div>
-        </div>
+    
+    <div id="parts-container"></div>
+
+    <div class="add-button-container">
+        <button type="button" onclick="addPart()" class="btn-add">+ Add Part</button>
+    </div>
+</div>
     </div>
 
     <div class="field-group full-width" style="margin-top: 20px;">
