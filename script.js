@@ -337,7 +337,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function copyToClipboard() {
-    navigator.clipboard.writeText(document.getElementById('report-output').innerText).then(() => alert("LIMS Report Copied!"));
+    navigator.clipboard.writeText(document.getElementById('report-output').innerText).then(() => alert("Report copied"));
 }
 
 // Saves the name to the browser so it's there next time you visit
